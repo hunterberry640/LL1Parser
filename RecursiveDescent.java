@@ -3,7 +3,7 @@ Author: Hunter Berry
 Date: Feb 9th, 2021
 Description: Command line Java program. LL1 Recursive Descent parser for arithmetic expressions.
 Use: In folder with LL1.class file run commmand: java LL1 "arithmetic expression". 
-Example: java LL1 "5+(4-3)"     Output: "Expression is valid"
+Example: java LL1 "5+(4-3)"     Output: "Valid: 6.0"
 */
 import java.util.ArrayList;
 
@@ -11,6 +11,7 @@ public class RecursiveDescent {
     public static ArrayList<String> tokensList = new ArrayList<String>();
     public static String tok;
     public static int curTok;
+    public static int openParens;
     public static void main(String[] args) {
 
         String input = args[0];
@@ -23,85 +24,95 @@ public class RecursiveDescent {
             tokensList.add(string);
         }
 
+        // declare variable to keep count of open parenthesis. 
+        // This gets rid of the bug where there is a hanging closing parenthesis ex: 4+5)+7 before this would display as valid
+        openParens = 0;
         tokensList.add("$"); // add the ending symbol
         curTok = 0;
         tok= tokensList.get(curTok);
-        
-        E();
-        
-        if(tokensList.get(curTok).equals("$")){
-            
-            System.out.println("Expression is Valid");
-            // System.out.println(value);
-            
+        double value = 0;
+        value = E();
+
+        if(openParens == 0 && tokensList.get(curTok).equals("$")){
+            System.out.println("Valid: " + Double.toString(value));
         }else{
-            System.out.println("Expression is invalid");
+            System.out.println("Invalid Expression");
         }
     }
 
-    private static void E() {
-        // int answer = 0;
-        System.out.println("in E");
-        System.out.println(tok);
+    private static double E() {
+        double val = 0;
         switch(tok){
-            case "(": T();   Epr(); break;
+            case "(": 
+                val = T(); 
+                val += Epr(); 
+            break;
             default: 
 				if (tok.matches("\\d+\\.\\d+")) {
-                        T(); Epr(); break;
+                        val = T(); 
+                        val += Epr(); 
+                        break;
 					}else if(tok.matches("\\d+")){
-						T(); Epr(); break;
+						val = T(); 
+                        val += Epr();
+                        break;
+                        
 					}else{
 						System.out.println("Invalid");
 					}
         }
-
-        // return answer;
+        return val;
     }
 
-    private static void Epr() {
-        System.out.println("in Epr");
-        System.out.println(tok);
+    private static double Epr() {
+        double val = 0;
         switch(tok){
             case "+": 
                 curTok++;
                 tok = tokensList.get(curTok);
-                T();
-                Epr();
+                val += T();
+                val += Epr();
                 break;
+                
             case "-": 
                 curTok++;
                 tok = tokensList.get(curTok);
-                T();
-                Epr();
+                val += 0 - T();
+                val += Epr();
+                
                 break;
             case ")":
                 break;
             case "$":
                 break;
             default:
-                System.out.println("Failure in Epr");
         }
+        return val;
     }
 
-    private static void T() {
-        System.out.println("in T");
-        System.out.println(tok);
+    private static double T() {
+        double val = 0;
         switch(tok){
-            case "(": F(); Tpr(); break;
+            case "(": 
+            val = F(); 
+            val *= Tpr(); 
+            break;
             default: 
 				if (tok.matches("\\d+\\.\\d+")) {
-                        F(); Tpr(); break;
+                        val = F();
+                        val *= Tpr();
+                        break;
 					}else if(tok.matches("\\d+")){
-						F(); Tpr(); break;
-					}else{
-						System.out.println("Invalid");
+						val = F();
+                        val *= Tpr();
+                        break;
 					}
         }
+        return val;
     }
 
-    private static void Tpr() {
-        System.out.println("in Tpr");
-        System.out.println(tok);
+    private static double Tpr() {
+        double val = 1;
         switch(tok){
             case "+": break;
             case "-": break;
@@ -110,49 +121,53 @@ public class RecursiveDescent {
             case "*": 
                 curTok++;
                 tok = tokensList.get(curTok);
-                F();
-                Tpr();
+                val *= F();
+                val *= Tpr();
                 break;
             case "/":
                 curTok++;
                 tok = tokensList.get(curTok);
-                F();
-                Tpr();
+                val *= 1/F();
+                val *= Tpr();
                 break;
             default:
-                System.out.println("Failure in Tpr");
+                
         }
+        return val;
     }
-    private static void F() {
-        System.out.println("in F");
-        System.out.println(tok);
+    private static double F() {
+        double val = 0;
         switch(tok){
             case "(": 
+                openParens++;
                 curTok++;
                 tok = tokensList.get(curTok);
-                E();
-                // Once the recursive calls return to this method 
-                // we check to see if it is our matching closing parenthesis,
-                // if so go to next token else expression is invalid
+                val += E();
+                // Once E() returns and we continue in this method 
+                // we check to see if curTok is our matching closing parenthesis,
+                // if so go to next token, else expression is invalid
                 if(tok.equals(")")){
+                    openParens--;
                     curTok++;
                     tok = tokensList.get(curTok);
-                    break;
                 }
                 break;
             default: 
 				if (tok.matches("\\d+\\.\\d+")) {
+                        val = Double.parseDouble(tok);
                         curTok++;
                         tok = tokensList.get(curTok);
-                        
+                        return val;
 					}else if(tok.matches("\\d+")){
+                        val = Double.parseDouble(tok);
 						curTok++;
                         tok = tokensList.get(curTok);
-                        System.out.println(tok);
+                        return val;
 					}else{
 						System.out.println("Invalid");
 					}
                 }
+        return val;
     }
 
 
